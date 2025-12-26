@@ -57,6 +57,40 @@ export default function NavMenu({ isOpen, onClose, currentView, setView }) {
                         <Settings size={20} />
                         Product Management
                     </button>
+
+                    <button
+                        onClick={() => handleNav('lineworker')}
+                        className={`nav-item ${currentView === 'lineworker' ? 'active' : ''}`}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem',
+                            borderRadius: '0.75rem', border: 'none', background: currentView === 'lineworker' ? '#eff6ff' : 'transparent',
+                            color: currentView === 'lineworker' ? '#2563eb' : '#0f172a', fontWeight: 600, cursor: 'pointer',
+                            fontSize: '1rem', textAlign: 'left'
+                        }}
+                    >
+                        <LayoutGrid size={20} />
+                        <div>
+                            <div>Line Worker View</div>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 400, color: '#64748b' }}>Simplified Catalog</div>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => handleNav('meal-builder')}
+                        className={`nav-item ${currentView === 'meal-builder' ? 'active' : ''}`}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem',
+                            borderRadius: '0.75rem', border: 'none', background: currentView === 'meal-builder' ? '#eff6ff' : 'transparent',
+                            color: currentView === 'meal-builder' ? '#2563eb' : '#0f172a', fontWeight: 600, cursor: 'pointer',
+                            fontSize: '1rem', textAlign: 'left'
+                        }}
+                    >
+                        <LayoutGrid size={20} />
+                        <div>
+                            <div>Meal Builder</div>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 400, color: '#64748b' }}>Create & Track</div>
+                        </div>
+                    </button>
                 </nav>
             </div>
         </div>

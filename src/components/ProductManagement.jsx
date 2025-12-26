@@ -4,6 +4,7 @@ import { ALLERGENS, CONSISTENCIES, MAY_CONTAIN_LABEL, IDDSI_LEVELS, SUB_CATEGORI
 
 export default function ProductManagement({ products, onAdd, onEdit, onDelete }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewingProduct, setViewingProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
 
@@ -21,7 +22,13 @@ export default function ProductManagement({ products, onAdd, onEdit, onDelete })
             mayContain: [],
             consistency: [],
             calories: 0,
-            protein: '0g'
+            protein: '0g',
+            fat: '0g',
+            saturatedFat: '0g',
+            carbohydrates: '0g',
+            sugar: '0g',
+            sodium: '0mg',
+            fiber: '0g'
         };
     }
 
@@ -99,6 +106,7 @@ export default function ProductManagement({ products, onAdd, onEdit, onDelete })
                             <th style={{ padding: '1rem' }}>Category</th>
                             <th style={{ padding: '1rem' }}>IDDSI</th>
                             <th style={{ padding: '1rem' }}>Allergens</th>
+                            <th style={{ padding: '1rem' }}>Last Modified</th>
                             <th style={{ padding: '1rem', textAlign: 'right' }}>Actions</th>
                         </tr>
                     </thead>
@@ -106,7 +114,12 @@ export default function ProductManagement({ products, onAdd, onEdit, onDelete })
                         {filteredProducts.map(product => (
                             <tr key={product.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '1rem' }}>
-                                    <div style={{ fontWeight: 500 }}>{product.name}</div>
+                                    <div
+                                        onClick={() => setViewingProduct(product)}
+                                        style={{ fontWeight: 500, cursor: 'pointer', color: '#2563eb', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                                    >
+                                        {product.name}
+                                    </div>
                                     <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{product.chameleonName}</div>
                                 </td>
                                 <td style={{ padding: '1rem' }}>{product.subCategory || '-'}</td>
@@ -118,6 +131,9 @@ export default function ProductManagement({ products, onAdd, onEdit, onDelete })
                                         ))}
                                         {product.allergens.length === 0 && <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>None</span>}
                                     </div>
+                                </td>
+                                <td style={{ padding: '1rem', color: '#64748b', fontSize: '0.9rem' }}>
+                                    {product.lastUpdated ? new Date(product.lastUpdated).toLocaleDateString() : '-'}
                                 </td>
                                 <td style={{ padding: '1rem', textAlign: 'right' }}>
                                     <button onClick={() => handleOpenEdit(product)} style={{ border: 'none', background: 'none', color: '#3b82f6', cursor: 'pointer', marginRight: '1rem' }} title="Edit">
@@ -133,7 +149,77 @@ export default function ProductManagement({ products, onAdd, onEdit, onDelete })
                 </table>
             </div>
 
-            {/* Modal */}
+            {/* View Details Modal */}
+            {viewingProduct && (
+                <div
+                    onClick={() => setViewingProduct(null)}
+                    style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1200 }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ background: 'white', borderRadius: '1rem', padding: '2rem', width: '500px', maxWidth: '90vw', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', position: 'relative' }}
+                    >
+                        <button
+                            onClick={() => setViewingProduct(null)}
+                            style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.5rem', paddingRight: '2rem' }}>{viewingProduct.name}</h3>
+                        <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>ID: {viewingProduct.chameleonName || 'N/A'}</div>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem', color: '#0f172a' }}>Nutritional Information</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', background: '#f8fafc', padding: '1rem', borderRadius: '0.75rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Calories:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.calories}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Protein:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.protein}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Fat:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.fat || '-'}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Saturated Fat:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.saturatedFat || '-'}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Carbs:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.carbohydrates || '-'}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Sugar:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.sugar || '-'}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Sodium:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.sodium || '-'}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#64748b' }}>Fiber:</span>
+                                    <span style={{ fontWeight: 600 }}>{viewingProduct.fiber || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {viewingProduct.notes && (
+                            <div>
+                                <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a' }}>Notes</h4>
+                                <p style={{ color: '#475569', fontSize: '0.9rem', fontStyle: 'italic', background: '#fffbeb', padding: '0.75rem', borderRadius: '0.5rem' }}>
+                                    {viewingProduct.notes}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Edit/Add Modal */}
             {isModalOpen && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
                     <form onSubmit={handleSave} style={{ background: 'white', borderRadius: '1rem', padding: '2rem', width: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -261,6 +347,72 @@ export default function ProductManagement({ products, onAdd, onEdit, onDelete })
                                     value={formData.protein}
                                     onChange={e => setFormData({ ...formData, protein: e.target.value })}
                                     placeholder="e.g. 10g"
+                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                                />
+                            </label>
+
+                            <label>
+                                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Fat</span>
+                                <input
+                                    type="text"
+                                    value={formData.fat || ''}
+                                    onChange={e => setFormData({ ...formData, fat: e.target.value })}
+                                    placeholder="e.g. 5g"
+                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                                />
+                            </label>
+
+                            <label>
+                                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Saturated Fat</span>
+                                <input
+                                    type="text"
+                                    value={formData.saturatedFat || ''}
+                                    onChange={e => setFormData({ ...formData, saturatedFat: e.target.value })}
+                                    placeholder="e.g. 1g"
+                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                                />
+                            </label>
+
+                            <label>
+                                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Carbohydrates</span>
+                                <input
+                                    type="text"
+                                    value={formData.carbohydrates || ''}
+                                    onChange={e => setFormData({ ...formData, carbohydrates: e.target.value })}
+                                    placeholder="e.g. 20g"
+                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                                />
+                            </label>
+
+                            <label>
+                                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Sugar</span>
+                                <input
+                                    type="text"
+                                    value={formData.sugar || ''}
+                                    onChange={e => setFormData({ ...formData, sugar: e.target.value })}
+                                    placeholder="e.g. 5g"
+                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                                />
+                            </label>
+
+                            <label>
+                                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Sodium</span>
+                                <input
+                                    type="text"
+                                    value={formData.sodium || ''}
+                                    onChange={e => setFormData({ ...formData, sodium: e.target.value })}
+                                    placeholder="e.g. 100mg"
+                                    style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                                />
+                            </label>
+
+                            <label>
+                                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Fiber</span>
+                                <input
+                                    type="text"
+                                    value={formData.fiber || ''}
+                                    onChange={e => setFormData({ ...formData, fiber: e.target.value })}
+                                    placeholder="e.g. 3g"
                                     style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
                                 />
                             </label>

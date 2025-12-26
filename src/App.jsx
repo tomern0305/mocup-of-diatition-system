@@ -5,6 +5,8 @@ import Sidebar from './components/Sidebar';
 import ProductCard from './components/ProductCard';
 import NavMenu from './components/NavMenu';
 import ProductManagement from './components/ProductManagement';
+import LineWorkerCatalog from './components/LineWorkerCatalog';
+import MealBuilder from './components/MealBuilder';
 import { Search, Menu } from 'lucide-react';
 import './index.css';
 
@@ -14,7 +16,7 @@ function App() {
     lastUpdated: p.lastUpdated || new Date().toISOString()
   })));
 
-  const [currentView, setCurrentView] = useState('inventory'); // 'inventory' | 'management'
+  const [currentView, setCurrentView] = useState('inventory'); // 'inventory' | 'management' | 'lineworker' | 'meal-builder'
   const [isNavOpen, setIsNavOpen] = useState(false);
 
   // --- Inventory State ---
@@ -97,6 +99,16 @@ function App() {
     return groups;
   }, [filteredProducts]);
 
+  const getPageTitle = () => {
+    switch (currentView) {
+      case 'inventory': return 'Kitchen Inventory';
+      case 'management': return 'Product Management';
+      case 'lineworker': return 'Line Worker View';
+      case 'meal-builder': return 'Meal Builder';
+      default: return 'Dietitian System';
+    }
+  };
+
   return (
     <div className="app-layout" style={{ display: 'flex', height: '100vh', width: '100%' }}>
       <NavMenu
@@ -116,7 +128,7 @@ function App() {
           </button>
 
           <h1 className="page-title">
-            {currentView === 'inventory' ? 'Kitchen Inventory' : 'Product Management'}
+            {getPageTitle()}
           </h1>
 
           {currentView === 'inventory' && (
@@ -133,7 +145,7 @@ function App() {
           )}
         </header>
 
-        {currentView === 'inventory' ? (
+        {currentView === 'inventory' && (
           <div className="scroll-area" style={{ padding: '2rem', paddingBottom: '4rem' }}>
             {Object.keys(groupedProducts).length === 0 ? (
               <div style={{ textAlign: 'center', color: '#64748b' }}>No products found.</div>
@@ -152,13 +164,23 @@ function App() {
               ))
             )}
           </div>
-        ) : (
+        )}
+
+        {currentView === 'management' && (
           <ProductManagement
             products={products}
             onAdd={handleAddProduct}
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
           />
+        )}
+
+        {currentView === 'lineworker' && (
+          <LineWorkerCatalog products={products} />
+        )}
+
+        {currentView === 'meal-builder' && (
+          <MealBuilder products={products} />
         )}
       </main>
 

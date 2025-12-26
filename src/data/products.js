@@ -13,7 +13,13 @@ export const products = [
         mayContain: [],
         consistency: [CONSISTENCIES.LIQUID_THICK, CONSISTENCIES.PUREED],
         calories: 120,
-        protein: "4g"
+        protein: "4g",
+        fat: "8g",
+        saturatedFat: "2g",
+        carbohydrates: "12g",
+        sugar: "2g",
+        sodium: "450mg",
+        fiber: "1g"
     },
     {
         id: 2,

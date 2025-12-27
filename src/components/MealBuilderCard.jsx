@@ -84,3 +84,5 @@ function NutriItem({ label, value }) {
         </div>
     );
 }
+
+

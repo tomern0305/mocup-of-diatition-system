@@ -10,14 +10,24 @@ import MealBuilder from './components/MealBuilder';
 import { Search, Menu } from 'lucide-react';
 import './index.css';
 
+import SavedMeals from './components/SavedMeals';
+
 function App() {
   const [products, setProducts] = useState(initialProducts.map(p => ({
     ...p,
     lastUpdated: p.lastUpdated || new Date().toISOString()
   })));
 
-  const [currentView, setCurrentView] = useState('inventory'); // 'inventory' | 'management' | 'lineworker' | 'meal-builder'
+  const [currentView, setCurrentView] = useState('inventory'); // 'inventory' | 'management' | 'lineworker' | 'meal-builder' | 'saved-meals'
   const [isNavOpen, setIsNavOpen] = useState(false);
+
+  // --- Saved Meals State ---
+  const [savedMeals, setSavedMeals] = useState([]);
+
+  const handleSaveMeal = (mealData) => {
+    setSavedMeals([mealData, ...savedMeals]);
+    alert('Meal saved successfully!');
+  };
 
   // --- Inventory State ---
   const [filters, setFilters] = useState({
@@ -105,6 +115,7 @@ function App() {
       case 'management': return 'Product Management';
       case 'lineworker': return 'Line Worker View';
       case 'meal-builder': return 'Meal Builder';
+      case 'saved-meals': return 'Saved Meals';
       default: return 'Dietitian System';
     }
   };
@@ -180,7 +191,11 @@ function App() {
         )}
 
         {currentView === 'meal-builder' && (
-          <MealBuilder products={products} />
+          <MealBuilder products={products} onSave={handleSaveMeal} />
+        )}
+
+        {currentView === 'saved-meals' && (
+          <SavedMeals meals={savedMeals} products={products} />
         )}
       </main>
 

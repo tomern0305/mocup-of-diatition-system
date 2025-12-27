@@ -1,16 +1,46 @@
 import React, { useState, useMemo } from 'react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { X, Search, RotateCcw } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, Label } from 'recharts';
+import { X, Search, RotateCcw, Save } from 'lucide-react';
 import MealBuilderCard from './MealBuilderCard';
 import { ALLERGENS, CONSISTENCIES, SUB_CATEGORIES } from '../constants';
 
-export default function MealBuilder({ products }) {
+const COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'];
+
+export default function MealBuilder({ products, onSave }) {
     const [selectedProductIds, setSelectedProductIds] = useState(new Set());
     const [constraints, setConstraints] = useState({
         allergens: new Set(), // ITEMS CONTAINING THESE WILL BE HIDDEN
         consistency: new Set(), // IF SET, ONLY ITEMS MATCHING THESE WILL BE SHOWN
         blockMayContain: false // IF TRUE, "MAY CONTAIN" ITEMS ALSO HIDDEN
     });
+    const [hoveredProduct, setHoveredProduct] = useState(null);
+
+    // --- Save Modal State ---
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [notes, setNotes] = useState("");
+
+    const handleSave = () => {
+        if (selectedProductIds.size === 0) {
+            alert("Please select at least one product.");
+            return;
+        }
+
+        const mealData = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            notes: notes,
+            products: Array.from(selectedProductIds),
+            constraints: {
+                allergens: Array.from(constraints.allergens),
+                consistency: Array.from(constraints.consistency),
+                blockMayContain: constraints.blockMayContain
+            }
+        };
+
+        if (onSave) onSave(mealData);
+        setIsSaveModalOpen(false);
+        setNotes("");
+    };
 
     // --- Helpers ---
     const parseNutrient = (val) => {
@@ -72,26 +102,23 @@ export default function MealBuilder({ products }) {
         return products.filter(p => selectedProductIds.has(p.id));
     }, [products, selectedProductIds]);
 
-    const nutritionTotals = useMemo(() => {
-        const total = { Calories: 0, Protein: 0, Fat: 0, Carbs: 0, Sodium: 0, Sugar: 0 };
-        selectedProducts.forEach(p => {
-            total.Calories += parseNutrient(p.calories);
-            total.Protein += parseNutrient(p.protein);
-            total.Fat += parseNutrient(p.fat);
-            total.Carbs += parseNutrient(p.carbohydrates);
-            total.Sodium += parseNutrient(p.sodium);
-            total.Sugar += parseNutrient(p.sugar);
+    const pieData = useMemo(() => {
+        return selectedProducts.map((p, index) => {
+            const profile = [
+                { name: 'Cal', value: parseNutrient(p.calories), fill: '#3b82f6' },
+                { name: 'Prot', value: parseNutrient(p.protein), fill: '#8b5cf6' },
+                { name: 'Fat', value: parseNutrient(p.fat), fill: '#f59e0b' },
+                { name: 'Carb', value: parseNutrient(p.carbohydrates), fill: '#10b981' },
+                { name: 'Sod', value: parseNutrient(p.sodium), fill: '#ef4444' },
+                { name: 'Sugr', value: parseNutrient(p.sugar), fill: '#ec4899' },
+            ];
+            return {
+                name: p.name,
+                value: parseNutrient(p.calories), // Slices based on Calories
+                fill: COLORS[index % COLORS.length],
+                nutritionProfile: profile
+            };
         });
-        // Round to 1 decimal
-        Object.keys(total).forEach(k => total[k] = Math.round(total[k] * 10) / 10);
-        return [
-            { name: 'Cal', value: total.Calories, fill: '#3b82f6' },
-            { name: 'Prot', value: total.Protein, fill: '#8b5cf6' },
-            { name: 'Fat', value: total.Fat, fill: '#f59e0b' },
-            { name: 'Carb', value: total.Carbs, fill: '#10b981' },
-            { name: 'Sod', value: total.Sodium, fill: '#ef4444' },
-            { name: 'Sugr', value: total.Sugar, fill: '#ec4899' },
-        ];
     }, [selectedProducts]);
 
     const groupedProducts = useMemo(() => {
@@ -106,19 +133,75 @@ export default function MealBuilder({ products }) {
 
     // --- Render ---
     return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflow: 'hidden' }}>
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#f8fafc', overflow: 'hidden', position: 'relative' }}>
+
+            {/* Modal Overlay */}
+            {isSaveModalOpen && (
+                <div style={{
+                    position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(2px)'
+                }}>
+                    <div style={{ background: 'white', borderRadius: '1rem', padding: '2rem', width: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', marginBottom: '1rem' }}>Save Meal</h3>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 700, color: '#64748b', marginBottom: '0.5rem' }}>
+                                Notes (Optional)
+                            </label>
+                            <textarea
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="E.g., Low sodium breakfast for Patient A..."
+                                style={{
+                                    width: '100%', minHeight: '100px', padding: '0.75rem', borderRadius: '0.5rem',
+                                    border: '1px solid #cbd5e1', fontSize: '0.95rem', resize: 'vertical'
+                                }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setIsSaveModalOpen(false)}
+                                style={{ padding: '0.6rem 1.25rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', background: 'white', color: '#64748b', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                style={{ padding: '0.6rem 1.25rem', borderRadius: '0.5rem', border: 'none', background: '#3b82f6', color: 'white', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                            >
+                                <Save size={18} />
+                                Confirm Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* STICKY TOP BAR */}
             <div style={{
-                height: '220px', background: 'white', borderBottom: '1px solid #e2e8f0',
+                height: '240px', background: 'white', borderBottom: '1px solid #e2e8f0',
                 flexShrink: 0, display: 'flex', padding: '1rem', gap: '2rem',
                 boxShadow: '0 4px 20px -5px rgba(0,0,0,0.1)', zIndex: 50
             }}>
                 {/* Left: Selected Items */}
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: 0 }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Your Meal ({selectedProducts.length})
-                    </h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Your Meal ({selectedProducts.length})
+                        </h3>
+                        <button
+                            onClick={() => setIsSaveModalOpen(true)}
+                            disabled={selectedProducts.length === 0}
+                            style={{
+                                padding: '0.4rem 0.8rem', fontSize: '0.85rem', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                background: selectedProducts.length > 0 ? '#eff6ff' : '#f1f5f9', color: selectedProducts.length > 0 ? '#3b82f6' : '#cbd5e1',
+                                border: '1px solid', borderColor: selectedProducts.length > 0 ? '#bfdbfe' : '#e2e8f0', cursor: selectedProducts.length > 0 ? 'pointer' : 'not-allowed',
+                                fontWeight: 700, transition: 'all 0.2s'
+                            }}
+                        >
+                            <Save size={14} />
+                            Save Meal
+                        </button>
+                    </div>
                     <div style={{
                         flex: 1, background: '#f1f5f9', borderRadius: '1rem', padding: '1rem',
                         display: 'flex', gap: '1rem', overflowX: 'auto', alignItems: 'center'
@@ -126,54 +209,112 @@ export default function MealBuilder({ products }) {
                         {selectedProducts.length === 0 && (
                             <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Select items below to build your meal...</span>
                         )}
-                        {selectedProducts.map(p => (
-                            <div key={p.id} onClick={() => removeProduct(p.id)} style={{
-                                background: 'white', padding: '0.5rem 1rem', borderRadius: '2rem',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '0.5rem',
-                                border: '1px solid #e2e8f0', cursor: 'pointer', flexShrink: 0, transition: 'all 0.2s',
-                                fontSize: '0.9rem', fontWeight: 600, color: '#334155'
-                            }}>
-                                {p.name}
-                                <div style={{ background: '#fee2e2', borderRadius: '50%', padding: '2px', display: 'flex' }}>
-                                    <X size={12} color="#ef4444" />
+                        {selectedProducts.map((p, index) => {
+                            const color = COLORS[index % COLORS.length];
+                            return (
+                                <div key={p.id} onClick={() => removeProduct(p.id)} style={{
+                                    background: 'white', padding: '0.5rem 1rem', borderRadius: '2rem',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                    border: `2px solid ${color}`, cursor: 'pointer', flexShrink: 0, transition: 'all 0.2s',
+                                    fontSize: '0.9rem', fontWeight: 600, color: '#334155'
+                                }}>
+                                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
+                                    {p.name}
+                                    <div style={{ background: '#fee2e2', borderRadius: '50%', padding: '2px', display: 'flex', marginLeft: '0.25rem' }}>
+                                        <X size={12} color="#ef4444" />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* Right: Chart */}
-                <div style={{ width: '400px', display: 'flex', flexDirection: 'column' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                        Live Nutrition
-                    </h3>
-                    <div style={{ flex: 1, fontSize: '0.75rem' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={nutritionTotals} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                                <YAxis hide />
-                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                <Bar dataKey="value" radius={[4, 4, 0, 0]} animationDuration={500}>
-                                    {nutritionTotals.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
+                <div style={{ width: '380px', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                            Calorie Breakdown
+                        </h3>
+                    </div>
+
+                    <div style={{ flex: 1, display: 'flex', gap: '1rem' }}>
+                        {/* Wrapper for Pie and Detail */}
+                        {pieData.length === 0 ? (
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e1', fontStyle: 'italic', fontSize: '0.75rem' }}>
+                                Add items to see breakdown
+                            </div>
+                        ) : (
+                            <>
+                                {/* Pie Section */}
+                                <div style={{ flex: '0 0 140px', height: '100%' }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart onMouseLeave={() => setHoveredProduct(null)}>
+                                            <Pie
+                                                data={pieData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={40}
+                                                outerRadius={60}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                onMouseEnter={(_, index) => setHoveredProduct(pieData[index])}
+                                            >
+                                                {pieData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="none" style={{ outline: 'none', cursor: 'pointer' }} />
+                                                ))}
+                                                <Label
+                                                    value={`${pieData.reduce((sum, item) => sum + item.value, 0)} cal`}
+                                                    position="center"
+                                                    fill="#64748b"
+                                                    style={{ fontSize: '12px', fontWeight: 'bold' }}
+                                                />
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+
+                                {/* Detail Section (Fixed Position) */}
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    {hoveredProduct ? (
+                                        <div style={{ background: 'white', borderRadius: '1rem', padding: '0.5rem 1rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.25rem' }}>
+                                                <h4 style={{ margin: 0, color: '#0f172a', fontWeight: 800, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>{hoveredProduct.name}</h4>
+                                                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'white', background: hoveredProduct.fill, padding: '0.1rem 0.5rem', borderRadius: '0.5rem' }}>{hoveredProduct.value} cal</span>
+                                            </div>
+                                            <div style={{ width: '100%', height: '80px' }}>
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={hoveredProduct.nutritionProfile} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barSize={16}>
+                                                        <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} dy={2} />
+                                                        <YAxis hide />
+                                                        <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} contentStyle={{ display: 'none' }} />
+                                                        <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+                                                            {hoveredProduct.nutritionProfile.map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                            ))}
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.75rem', textAlign: 'center', fontStyle: 'italic', padding: '1rem' }}>
+                                            Hover over chart to see details
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* CONTROL PANEL & GRID */}
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
                 {/* Side: Constraints */}
                 <div style={{ width: '280px', background: 'white', borderRight: '1px solid #e2e8f0', padding: '1.5rem', overflowY: 'auto' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         Constraints
                     </h3>
-
-                    {/* Consistency */}
                     <div style={{ marginBottom: '2rem' }}>
                         <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Allowed Consistencies</h4>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -195,12 +336,8 @@ export default function MealBuilder({ products }) {
                             ))}
                         </div>
                     </div>
-
-                    {/* Allergens */}
                     <div>
                         <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Safety (Exclude)</h4>
-
-                        {/* Strict Mode Toggle */}
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.9rem', marginBottom: '1rem', padding: '0.5rem', background: '#fff1f2', borderRadius: '0.5rem', border: '1px solid #fecaca' }}>
                             <input
                                 type="checkbox"
@@ -213,7 +350,6 @@ export default function MealBuilder({ products }) {
                                 <span style={{ fontSize: '0.75rem', color: '#991b1b' }}>Strict Safety Mode</span>
                             </div>
                         </label>
-
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             {Object.values(ALLERGENS).map(allergen => (
                                 <label key={allergen} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.95rem' }}>

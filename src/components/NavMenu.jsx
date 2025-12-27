@@ -91,6 +91,23 @@ export default function NavMenu({ isOpen, onClose, currentView, setView }) {
                             <div style={{ fontSize: '0.8rem', fontWeight: 400, color: '#64748b' }}>Create & Track</div>
                         </div>
                     </button>
+
+                    <button
+                        onClick={() => handleNav('saved-meals')}
+                        className={`nav-item ${currentView === 'saved-meals' ? 'active' : ''}`}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem',
+                            borderRadius: '0.75rem', border: 'none', background: currentView === 'saved-meals' ? '#eff6ff' : 'transparent',
+                            color: currentView === 'saved-meals' ? '#2563eb' : '#0f172a', fontWeight: 600, cursor: 'pointer',
+                            fontSize: '1rem', textAlign: 'left'
+                        }}
+                    >
+                        <LayoutGrid size={20} />
+                        <div>
+                            <div>Saved Meals</div>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 400, color: '#64748b' }}>View History</div>
+                        </div>
+                    </button>
                 </nav>
             </div>
         </div>

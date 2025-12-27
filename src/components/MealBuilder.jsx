@@ -6,18 +6,36 @@ import { ALLERGENS, CONSISTENCIES, SUB_CATEGORIES } from '../constants';
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444', '#ec4899', '#6366f1', '#14b8a6'];
 
-export default function MealBuilder({ products, onSave }) {
+export default function MealBuilder({ products, onSave, initialState }) {
     const [selectedProductIds, setSelectedProductIds] = useState(new Set());
     const [constraints, setConstraints] = useState({
-        allergens: new Set(), // ITEMS CONTAINING THESE WILL BE HIDDEN
-        consistency: new Set(), // IF SET, ONLY ITEMS MATCHING THESE WILL BE SHOWN
-        blockMayContain: false // IF TRUE, "MAY CONTAIN" ITEMS ALSO HIDDEN
+        allergens: new Set(),
+        consistency: new Set(),
+        blockMayContain: false
     });
     const [hoveredProduct, setHoveredProduct] = useState(null);
 
     // --- Save Modal State ---
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [notes, setNotes] = useState("");
+
+    // --- EFFECT: Initialize from Edit/Dup State ---
+    React.useEffect(() => {
+        if (initialState) {
+            setSelectedProductIds(new Set(initialState.products));
+            setConstraints({
+                allergens: new Set(initialState.constraints.allergens),
+                consistency: new Set(initialState.constraints.consistency),
+                blockMayContain: initialState.constraints.blockMayContain
+            });
+            setNotes(initialState.notes || "");
+        } else {
+            // Reset if no initialState (e.g. creating new from scratch manually)
+            setSelectedProductIds(new Set());
+            setConstraints({ allergens: new Set(), consistency: new Set(), blockMayContain: false });
+            setNotes("");
+        }
+    }, [initialState]);
 
     const handleSave = () => {
         if (selectedProductIds.size === 0) {
@@ -26,7 +44,7 @@ export default function MealBuilder({ products, onSave }) {
         }
 
         const mealData = {
-            id: Date.now(),
+            id: initialState?.id || Date.now(), // Keep ID if editing, else new
             date: new Date().toISOString(),
             notes: notes,
             products: Array.from(selectedProductIds),

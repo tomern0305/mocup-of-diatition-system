@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { Clock, AlertOctagon, Utensils, Calendar } from 'lucide-react';
+import { Clock, AlertOctagon, Utensils, Calendar, Edit, Copy, Trash2 } from 'lucide-react';
 import { ALLERGENS, CONSISTENCIES } from '../constants';
 
-export default function SavedMeals({ meals, products }) {
+export default function SavedMeals({ meals, products, onEdit, onDuplicate, onDelete }) {
     // Helper to get product details by ID
     const getProduct = (id) => products.find(p => p.id === id);
 
@@ -93,6 +93,29 @@ export default function SavedMeals({ meals, products }) {
                             </div>
                         </div>
 
+                        {/* Footer: Actions */}
+                        <div style={{ padding: '1rem', borderTop: '1px solid #f1f5f9', background: '#f8fafc', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => onDuplicate(meal)}
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', background: 'white', color: '#64748b', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                            >
+                                <Copy size={14} /> Duplicate
+                            </button>
+                            <button
+                                onClick={() => onEdit(meal)}
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderRadius: '0.5rem', border: 'none', background: '#3b82f6', color: 'white', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                            >
+                                <Edit size={14} /> Edit
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (window.confirm("Delete this saved meal?")) onDelete(meal.id);
+                                }}
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderRadius: '0.5rem', border: '1px solid #fee2e2', background: '#fef2f2', color: '#ef4444', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', marginLeft: 'auto' }}
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>

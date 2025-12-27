@@ -23,10 +23,39 @@ function App() {
 
   // --- Saved Meals State ---
   const [savedMeals, setSavedMeals] = useState([]);
+  const [editingMeal, setEditingMeal] = useState(null); // Passed to MealBuilder
 
   const handleSaveMeal = (mealData) => {
-    setSavedMeals([mealData, ...savedMeals]);
-    alert('Meal saved successfully!');
+    // Check if updating existing meal
+    const existingIndex = savedMeals.findIndex(m => m.id === mealData.id);
+
+    if (existingIndex >= 0) {
+      // Update
+      const updated = [...savedMeals];
+      updated[existingIndex] = mealData;
+      setSavedMeals(updated);
+      alert('Meal updated successfully!');
+    } else {
+      // Create New
+      setSavedMeals([mealData, ...savedMeals]);
+      alert('Meal saved successfully!');
+    }
+  };
+
+  const deleteMeal = (id) => {
+    setSavedMeals(savedMeals.filter(m => m.id !== id));
+  };
+
+  const startEditMeal = (meal) => {
+    setEditingMeal(meal); // Pass existing ID -> Update mode
+    setCurrentView('meal-builder');
+  };
+
+  const startDuplicateMeal = (meal) => {
+    // Create copy with NEW ID (or null to let Builder generate it)
+    // We'll pass it as "editingMeal" but with id: null so Builder treats it as new
+    setEditingMeal({ ...meal, id: null, date: new Date().toISOString() });
+    setCurrentView('meal-builder');
   };
 
   // --- Inventory State ---
@@ -126,7 +155,10 @@ function App() {
         isOpen={isNavOpen}
         onClose={() => setIsNavOpen(false)}
         currentView={currentView}
-        setView={setCurrentView}
+        setView={(view) => {
+          setCurrentView(view);
+          if (view === 'meal-builder') setEditingMeal(null); // Reset if navigating manually
+        }}
       />
 
       <main className="main-content" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -191,11 +223,21 @@ function App() {
         )}
 
         {currentView === 'meal-builder' && (
-          <MealBuilder products={products} onSave={handleSaveMeal} />
+          <MealBuilder
+            products={products}
+            onSave={handleSaveMeal}
+            initialState={editingMeal} // Pass the editing state
+          />
         )}
 
         {currentView === 'saved-meals' && (
-          <SavedMeals meals={savedMeals} products={products} />
+          <SavedMeals
+            meals={savedMeals}
+            products={products}
+            onEdit={startEditMeal}
+            onDuplicate={startDuplicateMeal}
+            onDelete={deleteMeal}
+          />
         )}
       </main>
 

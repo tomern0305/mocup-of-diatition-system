@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, Label } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, Label, LabelList } from 'recharts';
 import { X, Search, RotateCcw, Save } from 'lucide-react';
 import MealBuilderCard from './MealBuilderCard';
 import { ALLERGENS, CONSISTENCIES, SUB_CATEGORIES } from '../constants';
@@ -301,11 +301,12 @@ export default function MealBuilder({ products, onSave, initialState }) {
                                             </div>
                                             <div style={{ width: '100%', height: '80px' }}>
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={hoveredProduct.nutritionProfile} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barSize={16}>
+                                                    <BarChart data={hoveredProduct.nutritionProfile} margin={{ top: 15, right: 0, left: 0, bottom: 0 }} barSize={16}>
                                                         <XAxis dataKey="name" tick={{ fontSize: 8, fontWeight: 700, fill: '#64748b' }} axisLine={false} tickLine={false} dy={2} />
                                                         <YAxis hide />
                                                         <Tooltip cursor={{ fill: 'rgba(0,0,0,0.03)' }} contentStyle={{ display: 'none' }} />
                                                         <Bar dataKey="value" radius={[3, 3, 0, 0]}>
+                                                            <LabelList dataKey="value" position="top" style={{ fontSize: '9px', fontWeight: 'bold', fill: '#64748b' }} />
                                                             {hoveredProduct.nutritionProfile.map((entry, index) => (
                                                                 <Cell key={`cell-${index}`} fill={entry.fill} />
                                                             ))}

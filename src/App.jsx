@@ -219,7 +219,7 @@ function App() {
         )}
 
         {currentView === 'lineworker' && (
-          <LineWorkerCatalog products={products} />
+          <LineWorkerCatalog products={products} savedMeals={savedMeals} />
         )}
 
         {currentView === 'meal-builder' && (
